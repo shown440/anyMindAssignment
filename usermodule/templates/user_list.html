@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+{% block additional-headers %}
+    <head>
+        {% comment %} <title>
+            {% block title %} Member List{% endblock %}
+        </title> {% endcomment %}
+    </head>
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/plugins/select2/select2_metro.css' %}"/>
+    <link rel="stylesheet" href="{% static 'assets/plugins/data-tables/DT_bootstrap.css' %}"/>
+    <link rel="stylesheet" href="{% static 'assets/plugins/data-tables/jquery.dataTables.1.10.min.css' %}"/>
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/alertify.min.css"/>
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/themes/bootstrap.min.css"/>
+{% endblock %}
+
+{% block content %}
+
+    <form action="/usermodule/add_user/">
+        <input type="submit" class="btn red pull-right" value="Add User" style="margin-bottom:15px;">
+    </form>
+
+    <div class="portlet box red">
+    <div class="portlet-title">
+        <div class="caption"><i class="fa fa-adn"></i>User List</div>
+        <input type="hidden" id="tokenId" name="tokenId" value="">
+    </div>
+    <div class="portlet-body" style="overflow-x: auto; width: 100%;">
+        <div class="form-body">
+            <div class="row" style="margin-top:20px;">
+                <table id="member_table" class="table table-bordered table-striped table-condensed flip-content">
+                    <thead class="flip-content">
+                        <tr>
+                            <th>Name</th>
+                            <th>Username</th>
+                            {% comment %} <th>Email</th> {% endcomment %}
+                            <th>Mobile</th>
+                            <th>Address</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+     <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">Confirm Delete</h4>
+                </div>
+
+                <div class="modal-body">
+                    <p>You are about to delete a member, this procedure is irreversible.</p>
+                    <p>Do you want to proceed?</p>
+                    <p class="debug-url"></p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <a href="#" class="btn btn-danger btn-ok">Delete</a>
+                </div>
+            </div>
+        </div>
+     </div>
+
+{% endblock %}
+
+
+
+
+
+{% comment %} ##################################################################### {% endcomment %}
+{% comment %} Modified Copy: Shifullah {% endcomment %}
+{% comment %} ##################################################################### {% endcomment %}
+
+{% block additional-javascript %}
+    <script type="text/javascript"
+            src="{% static 'assets/plugins/bootstrap-multiselect/bootstrap-multiselect.js' %}"></script>
+    <script type="text/javascript" src="{% static 'assets/plugins/data-tables/jquery.dataTables.js' %}"></script>
+    <script type="text/javascript" src="{% static 'assets/plugins/data-tables/DT_bootstrap.js' %}"></script>
+    <script type="text/javascript"
+            src="{% static 'assets/plugins/data-tables/jquery.dataTables.1.10.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/members.js' %}"></script> 
+    <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+    
+    <script>
+        var csrftoken = '{{ csrf_token }}';
+        var user_id = '{{ request.user.id }}';
+        var table;
+        
+
+        $(document).ready(async function () { 
+            //let my_token = await token_generate();            
+
+             getMemberData2();
+            
+            //table.draw();
+            //getMemberData();
+        });
+
+        var my_dt_table;
+        function getMemberData2(data_token) {
+
+            //const current_jwt = 'JWT '+localStorage.getItem("jwt_token");
+            //console.log('$$$$$$$$$$$$$$$$ current_jwt: ', current_jwt);
+            //if (current_jwt){
+            if (my_dt_table){
+                //table.clear();
+                //table.destroy();
+            }
+            $('#member_table').DataTable().clear();
+            $('#member_table').DataTable().destroy();
+
+
+            //my_dt_table = $('#member_table').DataTable({
+            $('#member_table').DataTable({
+                //"processing": true,
+                "serverSide": true,
+                //"paging": true,
+                "searching": false,
+                /*search: {
+                    return: true
+                },*/
+                
+                "ajax": {
+                        method: "POST",
+                        headers: {'X-CSRFToken': csrftoken}, 
+                                    //'Authorization': data_token},
+                        url: "/usermodule/web/get_user_list/",
+                        data: {
+                            'user_id': user_id
+                        }
+                },
+                "dataType": "json",
+                "columns": [
+                    { "data": "au_name" },
+                    { "data": "username" },
+                    { "data": "mobile_no" },
+                    { "data": "address" }, 
+                    { "data": "actions" } 
+                ],
+                /*"drawCallback": function(settings) {
+                        token_generate();
+                        //const current_jwt = 'JWT '+localStorage.getItem("jwt_token");
+                },*/
+                
+            });
+                //my_dt_table.draw()
+
+            //}
+            
+            
+            
+        }
+
+        function changeStatus(member_id, new_status) {
+            $.ajax({
+                method: "POST",
+                headers: {'X-CSRFToken': csrftoken},
+                url: "/msbcc-module/change-client-status/",
+                data: {
+                    'client_id': member_id, 'new_status': new_status
+                },
+                success: function (result) {
+                    alert(result.message)
+                }
+            })
+        }
+
+        function deleteClient(member_id) {
+            //const current_jwt = 'JWT '+localStorage.getItem("jwt_token");
+            //console.log('$$$$$$$$$$$$$$$$ current_jwt: ', current_jwt);
+
+            alertify.confirm('Do you want to delete this client?', function () {
+                $.ajax({
+                    method: "POST",
+                    headers: {'X-CSRFToken': csrftoken},
+                        //'Authorization': current_jwt},
+                    //url: "/api/application/delete_application/",
+                    url: "/usermodule/web/delete_user/",
+                    data: {
+                        'client_id': member_id,
+                        'user_id': user_id
+                    },
+                    success: function (result) {
+                        alertify.set('notifier','position', 'top-center');
+                        alertify.success('Successfully Deleted.')
+                        getMemberData2();
+                    }
+                })
+            }, function () {
+                alertify.error('Cancel')
+            }).setHeader('<b> Delete Client </b> ');
+
+        }
+
+        var table;
+        $('.delete-item').live('click', function (e) {
+                var criteria_id = $(this).attr("data-href");
+                deleteClient(criteria_id);
+                //$('.btn-ok').attr("href", criteria_id);
+        });
+
+    </script>
+{% endblock %}
+
+{% comment %} ####################################################################### {% endcomment %}
