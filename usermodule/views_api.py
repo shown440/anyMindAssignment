@@ -81,7 +81,7 @@ class UserListAPI:
         }
     ))
     @api_view(['POST'])
-    @permission_classes((IsAuthenticated,)) # IsAuthenticated,
+    # @permission_classes((IsAuthenticated,)) # IsAuthenticated,
     def create_user(request):
         """
             POST create_user
